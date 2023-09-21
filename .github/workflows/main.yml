@@ -1,0 +1,45 @@
+name: Random Daily Commits
+
+on:
+  schedule:
+    - cron: '0 0,16 * * *'
+    
+  workflow_dispatch:
+
+jobs:
+  random_daily_commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3.5.3
+        with:
+          submodules: 'recursive'
+
+      - name: Set up Node.js 16
+        uses: actions/setup-node@v3.7.0
+        with:
+          node-version: '16.x'
+
+      - name: Set up Git user
+        run: |
+          git config user.name "Michela"
+          git config user.email "mgaligigi@163.com"
+
+      - name: Get random commit count (between 2 and 5)
+        id: random_commit_count
+        run: |
+          echo "commit_count=$(shuf -i 2-5 -n 1)" >> $GITHUB_ENV
+
+      - name: Make random changes
+        run: |
+          commit_count=${{ env.commit_count }}
+          for ((i=1; i<=$commit_count; i++)); do
+            commit_message="# Daily Commit - $(date +'%Y-%m-%d %H:%M:%S') - Attempt $i/$commit_count"
+            echo $commit_message >> daily-commit.txt
+            git add daily-commit.txt
+            git commit -m "$commit_message"
+          done
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
